@@ -1,0 +1,17 @@
+{
+  "name": "one",
+  "version": "1.0.0",
+  "main": "./dist/main.js",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.30.0",
+    "typescript": "^4.3.5"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "start": "node ./dist/main.js",
+    "start:debug": "yarn start --inspect"
+  }
+}

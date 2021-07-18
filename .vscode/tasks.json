@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "command": "yarn",
+    "tasks": [
+        {
+            "label":"start",
+            "args": ["start"]
+        },
+        {
+            "label": "compile",
+            "type": "shell",
+            "group": "build",
+            "args": ["build"]
+        }
+    ]
+}
