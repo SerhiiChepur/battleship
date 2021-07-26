@@ -1,5 +1,5 @@
-import { BattleFieldRepositoryInterface } from './BattleFieldRepository.interface';
+import { BattleFieldRepository } from './BattleFieldRepository.interface';
 
-export class BattleFieldRepository implements  BattleFieldRepositoryInterface {
+export class InMemoryBattleFieldRepository implements  BattleFieldRepository {
 
 }

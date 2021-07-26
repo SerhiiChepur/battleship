@@ -8,6 +8,6 @@ export class ShipBase {
     public readonly direction!: ShipDirection;
     public readonly zeroPosition!: CellCoordinate;
     public readonly size!: number;
-    public health!: number;
-    public state!: ShipStatus;
+    public readonly health!: number;
+    public readonly state!: ShipStatus;
 }

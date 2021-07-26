@@ -1,4 +1,3 @@
-import { ShipDirection } from '../enum/ShipDirection.enum';
 export class CellCoordinate {
     public readonly row!: number;
     public readonly col!: number;

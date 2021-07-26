@@ -1,5 +1,3 @@
-import { BattleField } from '../model/BattleField.model';
-import { Ship } from '../model/Ship.model';
 import { GameStrategyBase } from './GameStrategyBase';
 import { ShipType } from '../enum/ShipType.enum';
 import { ShipBase } from '../model/ShipBase.model';
@@ -9,10 +7,10 @@ import { ShipDirection } from '../enum/ShipDirection.enum';
 const RULES_VIOLATION_BOARD_MSG = 'Rules violation: board';
 
 export class ShipsCanBePlacedNearby extends GameStrategyBase {
-    private readonly shipsConstraints!: Map<ShipType, number>;
+    private readonly shipCountConstraints!: Map<ShipType, number>;
     constructor() {
         super();
-        this.shipsConstraints = new Map<number, number>([
+        this.shipCountConstraints = new Map<number, number>([
             [ShipType.Destroyer, 1], 
             [ShipType.Submarine, 2], 
             [ShipType.Cruiser, 1], 
@@ -20,13 +18,13 @@ export class ShipsCanBePlacedNearby extends GameStrategyBase {
         ]);
     }
 
-    protected checkShipsForAllocation(ships: ShipBase[]): void {
+    protected checkShipCountConstraints(ships: ShipBase[]): void {
         const countersPerShipTypes = new Map<ShipType, number>();
         ships.forEach(ship => {
             let shipCounter = countersPerShipTypes.get(ship.shipType) || 0;
             countersPerShipTypes.set(ship.shipType, ++shipCounter);
         });
-        this.shipsConstraints.forEach((requiredShipCount, shipType) => {
+        this.shipCountConstraints.forEach((requiredShipCount, shipType) => {
             const shipsCount = countersPerShipTypes.get(shipType) || 0;
             const countMatch = requiredShipCount === shipsCount;
 
@@ -38,7 +36,7 @@ export class ShipsCanBePlacedNearby extends GameStrategyBase {
         const errorMessages = new Array<string>();
         if (countersPerShipTypes.values.length) {
             countersPerShipTypes.forEach((shipsCount, shipType) => {
-                const requiredCount = this.shipsConstraints.get(shipType);
+                const requiredCount = this.shipCountConstraints.get(shipType);
                 const errMessage = requiredCount 
                 ? `${RULES_VIOLATION_BOARD_MSG} should contain ${requiredCount} of ${ShipType[shipType]} rather then ${shipsCount}`
                 : `${RULES_VIOLATION_BOARD_MSG} could not contain ships of ${ShipType[shipType]} type`
@@ -48,19 +46,48 @@ export class ShipsCanBePlacedNearby extends GameStrategyBase {
         }
     }
 
-    protected getShipsAllocationMock(battleField: BattleField, ships: ShipBase[]): Map<string, Ship[]> {
-        const x = new Map<string, ShipBase[]>();
-        ships.forEach(ship => {
-            const {errorMessage, affectedGridCells} = this.getReservedAreaOrError(ship, battleField.squareSideSize);
-            if(!errorMessage){
-                const relatedCellKeys = affectedGridCells.map(cell => cell.getPositionKey());
-                x.get();
+    protected checkShipsAllocationConflicts(squareSideSize: number, ships: ShipBase[]) {
+        //array used for support "air carrier" feature - some ships could have objects on their top floor
+        const proposedAllocationIndex = new Map<string, ShipBase[]>(); 
+        const allocationConflictsStrings = new Array<string>();
+
+        for (const ship of ships) {
+            const {errorMessage: cellBoundsError, affectedGridCells} = this.getShipReservedCellsOrError(ship, squareSideSize);
+            if(cellBoundsError) {
+                allocationConflictsStrings.push(cellBoundsError);
+                continue
             }
-        })
-        return 1 as any;
+            
+            const shipCells = affectedGridCells.map(cell => cell.getPositionKey());
+            const hasConflictsWithProposedAllocation = this.shipHasConflictsWithOtherProposedShips(shipCells, proposedAllocationIndex);
+            this.populateAllocationIndex(shipCells, proposedAllocationIndex, ship);
+            
+            if (hasConflictsWithProposedAllocation) {
+                const allocationError = `The ${ship.shipType} with zero position ${ship.zeroPosition.getPositionKey()} intercepts with other ships`;
+                allocationConflictsStrings.push(allocationError);
+                continue;
+            }
+        }
+
+        if(allocationConflictsStrings.length) {
+            throw Error(allocationConflictsStrings.join(',\n'));
+        }
     }
 
-    private getReservedAreaOrError(ship: ShipBase, squareSideSize: number) {
+    private populateAllocationIndex(shipCells: string[], proposedAllocationIndex: Map<string, ShipBase[]>, ship: ShipBase) {
+        shipCells.forEach(cellKey => {
+            const cellObjects = proposedAllocationIndex.get(cellKey) || [];
+            cellObjects.push(ship);
+            proposedAllocationIndex.set(cellKey, cellObjects);
+        });
+    }
+
+    private shipHasConflictsWithOtherProposedShips(shipCellsKeys: string[], proposedAllocationIndex: Map<string, ShipBase[]>) {
+        const usedCellIndexes = Array.from(proposedAllocationIndex.keys());
+        return usedCellIndexes.some(usedCellIndex => shipCellsKeys.includes(usedCellIndex));
+    }
+
+    private getShipReservedCellsOrError(ship: ShipBase, squareSideSize: number) {
         const isHorizontal = ship.direction === ShipDirection.horizontal;
         let errorMessage = '';
         const affectedGridCells = new Array<CellCoordinate>();
