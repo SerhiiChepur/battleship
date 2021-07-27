@@ -1,7 +1,7 @@
 import { BattleField } from '../model/BattleField.model';
 import { ShipBase } from '../model/ShipBase.model';
 
-export abstract class GameStrategyBase {
+export abstract class ShipsAllocationStrategyBase {
      public checkShipsAllocation(battleField: BattleField, newShips: ShipBase[]) {
         this.checkShipCountConstraints(newShips);
         this.checkShipsAllocationConflicts(battleField.squareSideSize, newShips);

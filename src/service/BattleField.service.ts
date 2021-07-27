@@ -1,13 +1,13 @@
 import { BattleFieldRepository } from '../repository/BattleFieldRepository.interface';
-import { Ship } from '../model/Ship.model';
 import { GameStrategyMode } from '../enum/GameStrategyMode.enum';
 import { GameAction } from '../model/GameAction.model';
 import { BattleField } from '../model/BattleField.model';
 import { BattleStatus } from '../enum/BattleStatus.enum';
 import { ActionResult } from '../enum/ActionResult.enum';
-import { GameStrategyBase } from '../game-strategy/GameStrategyBase';
+import { ShipsAllocationStrategyBase } from '../game-strategy/ShipsAllocationStrategyBase';
 import { ShipsCanBePlacedNearby } from '../game-strategy/ShipsCanBePlacedNearby.strategy';
 import { ShipBase } from '../model/ShipBase.model';
+import { ActionType } from '../enum/ActionType.enum';
 
 export class BattleFieldService {
     private readonly battleRepository!: BattleFieldRepository;
@@ -27,9 +27,14 @@ export class BattleFieldService {
             throw new Error(`Ships could be added only during the game init step`);
         }
 
-        const battleStrategy = this.getBattleStrategy(battleField.gameMode);
+        const playerShipsCount = await this.battleRepository.getShipCountByPlayer(battleField.battleFieldId, playerId);
+        if (playerShipsCount) {
+            throw new Error(`Your ships already placed on battlefield`);
+        }
+
+        const battleStrategy = this.getShipsAllocationStrategy(battleField.gameMode);
         battleStrategy.checkShipsAllocation(battleField, ships);
-        
+
         return await this.battleRepository.insertShips(battleFieldId, playerId, ships);
     }
 
@@ -51,11 +56,19 @@ export class BattleFieldService {
     }
 
     private activeInteraction(battleField: BattleField, gameActionInput: GameAction): ActionResult {
-        const battleStrategy = this.getBattleStrategy(battleField.gameMode);
+        const battleStrategy = this.getShipsAllocationStrategy(battleField.gameMode);
+       // this.
+        switch(gameActionInput.actionType){
+            case ActionType.shot: {
+                break;
+            }
+            default: 
+            throw new Error(`The ${gameActionInput.actionType} action is not supported yet`);
+        }
         throw new Error('Method not implemented.');
     }
 
-    private getBattleStrategy(gameMode: GameStrategyMode): GameStrategyBase {
+    private getShipsAllocationStrategy(gameMode: GameStrategyMode): ShipsAllocationStrategyBase {
         switch (gameMode) {
             case GameStrategyMode.shipsCanBePlacedNearby:
                 return new ShipsCanBePlacedNearby();

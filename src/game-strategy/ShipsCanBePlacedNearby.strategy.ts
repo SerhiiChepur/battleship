@@ -1,4 +1,4 @@
-import { GameStrategyBase } from './GameStrategyBase';
+import { ShipsAllocationStrategyBase } from './ShipsAllocationStrategyBase';
 import { ShipType } from '../enum/ShipType.enum';
 import { ShipBase } from '../model/ShipBase.model';
 import { CellCoordinate } from '../model/CellCoordinate.model';
@@ -6,7 +6,7 @@ import { ShipDirection } from '../enum/ShipDirection.enum';
 
 const RULES_VIOLATION_BOARD_MSG = 'Rules violation: board';
 
-export class ShipsCanBePlacedNearby extends GameStrategyBase {
+export class ShipsCanBePlacedNearby extends ShipsAllocationStrategyBase {
     private readonly shipCountConstraints!: Map<ShipType, number>;
     constructor() {
         super();

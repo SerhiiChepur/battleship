@@ -4,4 +4,5 @@ import { BattleField } from '../model/BattleField.model';
 export interface BattleFieldRepository {
     insertShips(battleFieldId: number, playerId: number, ships: ShipBase[]): Promise<Ship[]>;
     getBattleField(battleFieldId: number): Promise<BattleField>;
+    getShipCountByPlayer(battleFieldId: number, playerId: number): Promise<number>;
 }

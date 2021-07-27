@@ -1,3 +1,6 @@
 export enum ActionResult {
-    invalidAction
+    invalidAction,
+    miss,
+    hit,
+    sink
 }
