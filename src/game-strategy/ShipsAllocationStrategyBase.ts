@@ -1,5 +1,4 @@
-import { BattleField } from '../model/BattleField.model';
-import { ShipBase } from '../model/ShipBase.model';
+import { BattleField, ShipBase } from "../model";
 
 export abstract class ShipsAllocationStrategyBase {
      public checkShipsAllocation(battleField: BattleField, newShips: ShipBase[]) {

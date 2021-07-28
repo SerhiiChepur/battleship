@@ -1,13 +1,8 @@
-import { BattleFieldRepository } from '../repository/BattleFieldRepository.interface';
-import { GameStrategyMode } from '../enum/GameStrategyMode.enum';
-import { GameAction } from '../model/GameAction.model';
-import { BattleField } from '../model/BattleField.model';
-import { BattleStatus } from '../enum/BattleStatus.enum';
-import { ActionResult } from '../enum/ActionResult.enum';
-import { ShipsAllocationStrategyBase } from '../game-strategy/ShipsAllocationStrategyBase';
-import { ShipsCanBePlacedNearby } from '../game-strategy/ShipsCanBePlacedNearby.strategy';
-import { ShipBase } from '../model/ShipBase.model';
-import { ActionType } from '../enum/ActionType.enum';
+import { GameStrategyMode, BattleStatus, ActionResult, ActionType } from "../enum";
+import { ShipsAllocationStrategyBase, ShipsCanBePlacedNearby } from "../game-strategy";
+import { ShipBase, GameAction, BattleField } from "../model";
+import { BattleFieldRepository } from "../repository";
+
 
 export class BattleFieldService {
     private readonly battleRepository!: BattleFieldRepository;

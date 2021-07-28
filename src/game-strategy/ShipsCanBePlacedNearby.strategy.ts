@@ -1,8 +1,7 @@
+import { ShipType, ShipDirection } from "../enum";
+import { ShipBase, CellCoordinate } from "../model";
 import { ShipsAllocationStrategyBase } from './ShipsAllocationStrategyBase';
-import { ShipType } from '../enum/ShipType.enum';
-import { ShipBase } from '../model/ShipBase.model';
-import { CellCoordinate } from '../model/CellCoordinate.model';
-import { ShipDirection } from '../enum/ShipDirection.enum';
+
 
 const RULES_VIOLATION_BOARD_MSG = 'Rules violation: board';
 
