@@ -2,6 +2,8 @@ import { GameStrategyMode, BattleStatus, ActionResult, ActionType } from "../enu
 import { ShipsAllocationStrategyBase, ShipsCanBePlacedNearby } from "../game-strategy";
 import { ShipBase, GameAction, BattleField } from "../model";
 import { BattleFieldRepository } from "../repository";
+import { CellCoordinate } from '../model/CellCoordinate.model';
+import { StandartActionStrategy } from '../game-strategy/StandartActionStrategy';
 
 
 export class BattleFieldService {
@@ -18,7 +20,7 @@ export class BattleFieldService {
      */
     public async putShipsOnBattleField(battleFieldId: number, playerId: number, ships: ShipBase[]) {
         const battleField = await this.battleRepository.getBattleField(battleFieldId);
-        if (battleField.currentStatus !== BattleStatus.init) {
+        if (battleField.status !== BattleStatus.init) {
             throw new Error(`Ships could be added only during the game init step`);
         }
 
@@ -27,10 +29,15 @@ export class BattleFieldService {
             throw new Error(`Your ships already placed on battlefield`);
         }
 
-        const battleStrategy = this.getShipsAllocationStrategy(battleField.gameMode);
-        battleStrategy.checkShipsAllocation(battleField, ships);
+        const allocationStrategy = this.getShipsAllocationStrategy(battleField.gameMode);
+        allocationStrategy.checkShipsAllocation(battleField, ships);
 
-        return await this.battleRepository.insertShips(battleFieldId, playerId, ships);
+        const allocatedPlayerShips = await this.battleRepository.insertShips(battleFieldId, playerId, ships);
+        if (await this.battleRepository.isAllPlayersShipsAllocated(battleFieldId)){
+            await this.battleRepository.updateBattleField({battleFieldId, status: BattleStatus.active});
+        }
+
+        return allocatedPlayerShips;
     }
 
     /**
@@ -38,35 +45,44 @@ export class BattleFieldService {
      */
     public async interactWithCell(gameActionInput: GameAction) {
         const battleField = await this.battleRepository.getBattleField(gameActionInput.battleFieldId);
-        switch (battleField.currentStatus) {
+        switch (battleField.status) {
             case BattleStatus.init:
-            case BattleStatus.paused:
             case BattleStatus.end:
                 return ActionResult.invalidAction;
             case BattleStatus.active:
-                return this.activeInteraction(battleField, gameActionInput);
+                return await this.activeInteraction(battleField, gameActionInput);
             default:
-                throw new Error(`Unhandled game status: ${battleField.currentStatus}`);
+                throw new Error(`Unhandled game status: ${battleField.status}`);
         }
     }
 
-    private activeInteraction(battleField: BattleField, gameActionInput: GameAction): ActionResult {
-        const battleStrategy = this.getShipsAllocationStrategy(battleField.gameMode);
-       // this.
-        switch(gameActionInput.actionType){
-            case ActionType.shot: {
-                break;
-            }
-            default: 
-            throw new Error(`The ${gameActionInput.actionType} action is not supported yet`);
-        }
-        throw new Error('Method not implemented.');
+    private async activeInteraction(battleField: BattleField, gameActionInput: GameAction) {
+        const battleStrategy = this.getShipsActionStrategy(battleField.gameMode);
+        const { cellX: row, cellY: col, playerId: userId, actionType: action } = gameActionInput;
+        const cellCoordinate = new CellCoordinate(row, col);
+        await battleStrategy.cellInteractAsync (
+                userId, 
+                cellCoordinate, 
+                action, 
+                battleField, 
+                this.battleRepository.getActionHistory, 
+                this.battleRepository.getRelatedCellShips
+            );
     }
 
-    private getShipsAllocationStrategy(gameMode: GameStrategyMode): ShipsAllocationStrategyBase {
+    private getShipsAllocationStrategy(gameMode: GameStrategyMode) {
         switch (gameMode) {
             case GameStrategyMode.shipsCanBePlacedNearby:
                 return new ShipsCanBePlacedNearby();
+            default:
+                throw new Error(`The ${gameMode} is not supported yet`);
+        }
+    }
+
+    private getShipsActionStrategy(gameMode: GameStrategyMode) {
+        switch (gameMode) {
+            case GameStrategyMode.shipsCanBePlacedNearby:
+                return new StandartActionStrategy();
             default:
                 throw new Error(`The ${gameMode} is not supported yet`);
         }
